@@ -1,15 +1,83 @@
-# Load necessary libraries
-library(dplyr)
+# Load the necessary libraries
 library(data.table)
 
-# Set working directory to where the dataset is
-setwd("<Your Path Here>")
+# Assuming the dataset is unzipped in the current working directory
+data <- fread("household_power_consumption.txt", na.strings="?")
 
-# Read dataset
-dataset <- fread("household_power_consumption.txt", sep = ";", na.strings = "?")
+# Preprocess the data
+data <- data[(Date == "1/2/2007" | Date == "2/2/2007"),]
+data[, Date := as.IDate(Date, format="%d/%m/%Y")]
+data[, Time := as.POSIXct(paste(Date, Time))]
 
-# Convert Date and Time to POSIXct
-dataset[, DateTime := as.POSIXct(paste(Date, Time), format = "%d/%m/%Y %H:%M:%S")]
+# Define a function for plotting
+createPlot <- function(data, type, xlab, ylab, filename) {
+  png(filename, width=480, height=480)
+  if (type == "histogram") {
+    hist(data[[1]], col="red", main=filename, xlab=xlab, ylab=ylab)
+  } else if (type == "line") {
+    with(data, plot(Date, data[[1]], type="l", xlab=xlab, ylab=ylab))
+  } else if (type == "plot") {
+    plot(data[[1]], data[[2]], xlab=xlab, ylab=ylab)
+  }
+  dev.off()
+}
 
-# Filter data for the dates 2007-02-01 and 2007-02-02
-dataset <- dataset[(DateTime >= as.POSIXct("2007-02-01")) & (DateTime <= as.POSIXct("2007-02-02"))]
+# Create Plot 1
+createPlot(plot1_data, "histogram", "Global Active Power (kilowatts)", "Frequency", "plot1.png")
+
+# Additional plots would be generated using similar logic, tailored to their specific requirements:
+# Example for plot2.R
+createPlot(plot2_data, "line", "Day", "Global Active Power (kilowatts)", "plot2.png")
+
+# And so on for plot3.R and plot4.R...
+# Plot 3: Two days of Sub metering 1, 2, and 3
+plot3 <- function(data) {
+  png(file="plot3.png", width=480, height=480)
+  with(data, {
+    plot(Date, Sub_metering_1, type="n", xlab="", ylab="Energy sub metering")
+    lines(Date, Sub_metering_1, type="l", col="black")
+    lines(Date, Sub_metering_2, type="l", col="red")
+    lines(Date, Sub_metering_3, type="l", col="blue")
+    legend("topright", legend=c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), 
+           col=c("black", "red", "blue"), lty=1, cex=0.8)
+  })
+  dev.off()
+}
+
+# Assuming 'data' is your data.table or data.frame with the required preprocessed data
+plot3(data)
+# Plot 4: Combined plot with Voltage, Global_active_power, Sub metering, and Global_reactive_power
+plot4 <- function(data) {
+  png(file="plot4.png", width=480, height=480)
+  par(mfrow=c(2,2))
+  
+  # Top-Left Plot (Global Active Power)
+  with(data, {
+    plot(Date, Global_active_power, type="l", xlab="", ylab="Global Active Power (kilowatts)")
+  })
+  
+  # Top-Right Plot (Voltage)
+  with(data, {
+    plot(Date, Voltage, type="l", xlab="datetime", ylab="Voltage")
+  })
+  
+  # Bottom-Left Plot (Energy sub metering)
+  with(data, {
+    plot(Date, Sub_metering_1, type="n", xlab="", ylab="Energy sub metering")
+    lines(Date, Sub_metering_1, type="l", col="black")
+    lines(Date, Sub_metering_2, type="l", col="red")
+    lines(Date, Sub_metering_3, type="l", col="blue")
+    legend("topright", legend=c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"), 
+           col=c("black", "red", "blue"), lty=1, cex=0.8)
+  })
+  
+  # Bottom-Right Plot (Global Reactive Power)
+  with(data, {
+    plot(Date, Global_reactive_power, type="l", xlab="datetime", ylab="Global Reactive Power (kilowatts)")
+  })
+  
+  dev.off()
+}
+
+# Assuming 'data' is your data.table or data.frame with the required preprocessed data
+plot4(data)
