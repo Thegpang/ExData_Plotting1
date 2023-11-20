@@ -1,0 +1,15 @@
+# Load necessary libraries
+library(dplyr)
+library(data.table)
+
+# Set working directory to where the dataset is
+setwd("<Your Path Here>")
+
+# Read dataset
+dataset <- fread("household_power_consumption.txt", sep = ";", na.strings = "?")
+
+# Convert Date and Time to POSIXct
+dataset[, DateTime := as.POSIXct(paste(Date, Time), format = "%d/%m/%Y %H:%M:%S")]
+
+# Filter data for the dates 2007-02-01 and 2007-02-02
+dataset <- dataset[(DateTime >= as.POSIXct("2007-02-01")) & (DateTime <= as.POSIXct("2007-02-02"))]
